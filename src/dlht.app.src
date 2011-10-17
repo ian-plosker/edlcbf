@@ -1,7 +1,7 @@
 {application, dlht,
  [
-  {description, ""},
-  {vsn, "1"},
+  {description, "d-left hash table-based bloom filters"},
+  {vsn, "0.0.1"},
   {registered, []},
   {applications, [
                   kernel,
