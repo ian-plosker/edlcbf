@@ -25,10 +25,9 @@
 -import(erlang, [make_tuple/2, phash2/2]).
 
 -ifdef(TEST).
-   %-include_lib("eunit/include/eunit.hrl").
+    -include_lib("eunit/include/eunit.hrl")i
+    -include_lib("eqc/include/eqc.hrl").
 -endif.
-
--include_lib("eqc/include/eqc.hrl").
 
 
 dlht(D, B) -> %, L) ->
@@ -136,26 +135,26 @@ bitstring_join(One, Two) ->
         ?assertNot(member(e, Dc)),
         ?assertNot(member(f, Dc)).
 
+    pos_int() ->
+        ?LET(N, int(), abs(N) + 1).
+
+    power_of_two() ->
+        ?LET(N, pos_int(), begin trunc(math:pow(2, N)) end).
+
+    prop_add_are_members() ->
+        ?FORALL(L, non_empty(list(int())),
+            ?FORALL({D, B}, {pos_int(), power_of_two()},
+                ?IMPLIES(D * B =< 64,
+                    check_membership(L, D, B)))).
+
+    prop_remove_bin() ->
+        ?FORALL(L, non_empty(list(int())),
+            ?FORALL({D, B}, {pos_int(), power_of_two()},
+                ?IMPLIES(D * B =< 64,
+                    check_membership(L, D, B)))).
+
+    check_membership(L, D, B) ->
+        F = lists:foldl(fun(X, Acc) -> add(X, Acc) end, dlht(D, B), L),
+        lists:all(fun(X) -> member(X, F) end, L).
+
 -endif.
-
-pos_int() ->
-    ?LET(N, int(), abs(N) + 1).
-
-power_of_two() ->
-    ?LET(N, pos_int(), begin trunc(math:pow(2, N)) end).
-
-prop_add_are_members() ->
-    ?FORALL(L, non_empty(list(int())),
-        ?FORALL({D, B}, {pos_int(), power_of_two()},
-            ?IMPLIES(D * B =< 64,
-                check_membership(L, D, B)))).
-
-prop_remove_bin() ->
-    ?FORALL(L, non_empty(list(int())),
-        ?FORALL({D, B}, {pos_int(), power_of_two()},
-            ?IMPLIES(D * B =< 64,
-                check_membership(L, D, B)))).
-
-check_membership(L, D, B) ->
-    F = lists:foldl(fun(X, Acc) -> add(X, Acc) end, dlht(D, B), L),
-    lists:all(fun(X) -> member(X, F) end, L).
