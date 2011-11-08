@@ -43,15 +43,15 @@ unsigned char *make_hash(unsigned char *data, unsigned long length) {
     return SHA1(data, length, hash);
 }
 
-dlht *init(unsigned int d, unsigned int b) {
-    table *tables = (table*)malloc(d * sizeof(*tables));
+dlht *init(unsigned int d, unsigned int b, void*(*alloc)(unsigned int)) {
+    table *tables = (table*)alloc(d * sizeof(*tables));
 
     unsigned int i;
     for(i = 0; i < d; i++) {
         bucket *buckets = (bucket*)malloc(b * sizeof(*buckets));
         int j;
         for (j = 0; j < b; j++) {
-            unsigned int *fingerprints = (unsigned int*)malloc(8 * sizeof(int));
+            unsigned int *fingerprints = (unsigned int*)alloc(8 * sizeof(int));
             bucket bucket;
             bucket.count = 0;
             bucket.fingerprints = fingerprints;
@@ -61,7 +61,7 @@ dlht *init(unsigned int d, unsigned int b) {
         table.buckets = buckets;
         tables[i] = table;
     }
-    dlht *t = (dlht*)malloc(sizeof *t);
+    dlht *t = (dlht*)alloc(sizeof *t);
     t->d = d;
     t->b = b;
     t->count = 0;
@@ -154,7 +154,7 @@ int member(const char *data, const unsigned int length, dlht *dlht) {
 
 int main() {
     dlht *t;
-    t = init(1,2);
+    t = init(1,2,malloc);
 
     printf("d: %i, b: %i\n", t->d, t->b);
 
