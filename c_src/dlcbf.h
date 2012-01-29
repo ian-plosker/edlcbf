@@ -19,5 +19,5 @@ typedef struct {
 } dlcbf_loc;
 
 dlcbf * init(unsigned int d, unsigned int b);
-void add(unsigned char *data, unsigned int length, dlcbf *dlcbf);
+void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf);
 int member(const unsigned char *data, const unsigned int length, dlcbf *dlcbf);

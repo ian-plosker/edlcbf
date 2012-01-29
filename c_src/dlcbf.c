@@ -1,6 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
-#include <stdio.h>
 
 #include "dlcbf.h"
 
@@ -65,7 +65,7 @@ unsigned int *item_location(const unsigned int *fingerprint, bucket bucket) {
     return NULL;
 }
 
-void add(unsigned char *data, unsigned int length, dlcbf *dlcbf) {
+void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
     unsigned char *hash = (unsigned char*)malloc(20*sizeof(char));
     SHA1(data, length, hash);
 
@@ -87,16 +87,12 @@ void add(unsigned char *data, unsigned int length, dlcbf *dlcbf) {
         }
     }
 
-    bucket bucket = dlcbf->tables[target_table].buckets[target_bucket];
-
-    unsigned int *fingerprint = malloc(sizeof(unsigned int));
-    memcpy(fingerprint, hash, sizeof(unsigned int));
-    free(hash);
-
-    bucket.fingerprints[bucket.count] = *fingerprint;
-    bucket.count++;
-    dlcbf->tables[target_table].buckets[target_bucket] = bucket;
+    bucket *bucket = &dlcbf->tables[target_table].buckets[target_bucket];
+    memcpy(&bucket->fingerprints[bucket->count], hash, sizeof(unsigned int));
+    bucket->count++;
     dlcbf->count++;
+
+    free(hash);
 }
 
 dlcbf_loc location_of(const char *data, const unsigned int length, dlcbf *dlcbf) {
