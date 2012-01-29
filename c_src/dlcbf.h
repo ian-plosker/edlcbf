@@ -1,7 +1,3 @@
-struct dlht * init(unsigned int d, unsigned int b, void*(*alloc)(unsigned int));
-void add(unsigned char *data, const unsigned int length, struct dlht *dlht);
-int member(unsigned char *data, unsigned int length, struct dlht *dlht);
-
 typedef struct {
     unsigned int count;
     unsigned int *fingerprints;
@@ -16,8 +12,12 @@ typedef struct {
     unsigned int b;
     unsigned int count;
     table *tables;
-} dlht;
+} dlcbf;
 
 typedef struct {
     const unsigned int *fingerprint;
-} dlht_loc;
+} dlcbf_loc;
+
+dlcbf * init(unsigned int d, unsigned int b);
+void add(unsigned char *data, unsigned int length, dlcbf *dlcbf);
+int member(const unsigned char *data, const unsigned int length, dlcbf *dlcbf);

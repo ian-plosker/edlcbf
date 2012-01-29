@@ -1,6 +1,6 @@
-{application, dlht,
+{application, dlcbf,
  [
-  {description, "d-left hash table-based bloom filters"},
+  {description, "d-left hash counting bloom filter"},
   {vsn, "0.0.1"},
   {registered, []},
   {applications, [
