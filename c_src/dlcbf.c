@@ -39,8 +39,8 @@ dlcbf *init(unsigned int d, unsigned int b) {
 
 unsigned int get_bits(const unsigned char* input, const unsigned int bits, const unsigned int n) {
     const unsigned int bitpos = n*bits;
-    return (input[bitpos/8] >> bitpos%8)
-        + (input[bitpos/8+1] << 8-bitpos%8)
+    return ((input[bitpos/8] >> bitpos%8)
+        + (input[bitpos/8+1] << (8-bitpos%8)))
         & (int)(pow(2,bits) - 1);
 }
 
@@ -66,7 +66,7 @@ unsigned int *item_location(const unsigned int *fingerprint, bucket bucket) {
 }
 
 void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
-    unsigned char *hash = (unsigned char*)malloc(20*sizeof(char));
+    unsigned char hash[20];
     SHA1(data, length, hash);
 
     const unsigned int *target_buckets = get_target_buckets(dlcbf->d, dlcbf->b, hash);
@@ -91,12 +91,10 @@ void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
     memcpy(&bucket->fingerprints[bucket->count], hash, sizeof(unsigned int));
     bucket->count++;
     dlcbf->count++;
-
-    free(hash);
 }
 
 dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
-    unsigned char *hash = (unsigned char*)malloc(20*sizeof(char));
+    unsigned char hash[20];
     SHA1(data, length, hash);
 
     unsigned int *target_buckets = get_target_buckets(dlcbf->d, dlcbf->b, hash);
@@ -115,7 +113,6 @@ dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcb
         }
     }
 
-    free(hash);
     return loc;
 }
 

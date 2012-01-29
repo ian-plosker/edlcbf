@@ -1,5 +1,5 @@
 typedef struct {
-    unsigned int count;
+    unsigned char count;
     unsigned int *fingerprints;
 } bucket;
 
