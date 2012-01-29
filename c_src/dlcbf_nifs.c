@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "erl_nif.h"
 #include "dlcbf.h"
 
@@ -9,12 +11,13 @@ typedef struct {
 
 ERL_NIF_TERM dlcbf_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     unsigned int d, b;
-    if (!enif_get_int(env, argv[0], &d) && !enif_get_int(env, argv[1], &b))
+    if (!enif_get_uint(env, argv[0], &d) ||
+        !enif_get_uint(env, argv[1], &b))
         return enif_make_badarg(env);
 
     dlcbf_handle* handle = (dlcbf_handle*)enif_alloc_resource(dlcbf_RESOURCE,
                                                             sizeof(dlcbf_handle));
-    dlcbf* dlcbf = init(2, 8);
+    dlcbf* dlcbf = init((unsigned int)2, (unsigned int)8);
     handle->dlcbf = dlcbf;
 
     ERL_NIF_TERM result = enif_make_resource(env, handle);

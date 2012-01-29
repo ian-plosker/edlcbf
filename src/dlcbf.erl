@@ -50,7 +50,7 @@ in(_Bin, _Dlht) ->
 -ifdef(TEST).
 
     basic_test() ->
-        {ok, D} = new(1,4),
+        {ok, D} = new(2,4),
         ok = add(<<"a">>, D),
         ok = add(<<"b">>, D),
         ok = add(<<"c">>, D),

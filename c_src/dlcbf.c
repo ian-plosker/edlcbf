@@ -95,7 +95,7 @@ void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
     free(hash);
 }
 
-dlcbf_loc location_of(const char *data, const unsigned int length, dlcbf *dlcbf) {
+dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
     unsigned char *hash = (unsigned char*)malloc(20*sizeof(char));
     SHA1(data, length, hash);
 
