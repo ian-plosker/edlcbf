@@ -29,25 +29,22 @@ ERL_NIF_TERM dlcbf_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 ERL_NIF_TERM dlcbf_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     ErlNifBinary data;
     dlcbf_handle* handle;
-    if (enif_get_resource(env, argv[1], dlcbf_RESOURCE, (void**)&handle) &&
-        enif_inspect_binary(env, argv[0], &data))
-    {
-        dlcbf* dlcbf = handle->dlcbf;
-        add(data.data, data.size, dlcbf);
-        return enif_make_atom(env, "ok");
-    }
-    else
-    {
+    if (!enif_get_resource(env, argv[1], dlcbf_RESOURCE, (void**)&handle) ||
+        !enif_inspect_binary(env, argv[0], &data))
         return enif_make_badarg(env);
-    }
+
+    dlcbf* dlcbf = handle->dlcbf;
+    add(data.data, data.size, dlcbf);
+    return enif_make_atom(env, "ok");
 }
 
 ERL_NIF_TERM in(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     ErlNifBinary data;
     dlcbf_handle* handle;
-    if (enif_get_resource(env, argv[1], dlcbf_RESOURCE, (void**)&handle) &&
-        enif_inspect_binary(env, argv[0], &data))
-    {
+    if (!enif_get_resource(env, argv[1], dlcbf_RESOURCE, (void**)&handle) ||
+        !enif_inspect_binary(env, argv[0], &data))
+        return enif_make_badarg(env);
+
         dlcbf* dlcbf = handle->dlcbf;
         if (member(data.data, data.size, dlcbf)) {
             return enif_make_atom(env, "true");
@@ -56,11 +53,6 @@ ERL_NIF_TERM in(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
         {
             return enif_make_atom(env, "false");
         }
-    }
-    else
-    {
-        return enif_make_badarg(env);
-    }
 }
 
 static void dlcbf_resource_cleanup(ErlNifEnv* env, void* arg) {
