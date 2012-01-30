@@ -6,13 +6,13 @@ for Erlang. Currently, it's a WORK IN PROGRESS.
 Done:
 
 - NIFs
-- `new`, `add`, `in`
+- `init`, `add`, `in`
 - *extremely* basic dlht
 - EQC tests that pass
+- space efficent implementation
 
 Needs:
 
 - `remove` and `resize`
 - dynamic bit reassignment
-- space efficent implementation
 - counters
