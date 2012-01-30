@@ -13,6 +13,6 @@ Done:
 
 Needs:
 
-- `remove` and `resize`
+- `remove`, `resize`, `dstry`
 - dynamic bit reassignment
 - counters
