@@ -20,9 +20,9 @@ dlcbf *init(unsigned int d, unsigned int b) {
     dlcbf->count = 0;
 
     unsigned int i;
-    dlcbf->tables = (table*)malloc(d*sizeof(table));
+    dlcbf->tables = (dlcbf_table*)malloc(d*sizeof(dlcbf_table));
     for(i = 0; i < d; i++) {
-        dlcbf->tables[i].buckets = malloc(sizeof(bucket)*b);
+        dlcbf->tables[i].buckets = malloc(sizeof(dlcbf_bucket)*b);
     }
 
     return dlcbf;
@@ -48,7 +48,7 @@ unsigned int* get_target_buckets(const unsigned int d, const unsigned int b, con
     return target_buckets;
 }
 
-FINGERPRINT *item_location(FINGERPRINT fingerprint, bucket* bucket) {
+FINGERPRINT *item_location(FINGERPRINT fingerprint, dlcbf_bucket* bucket) {
     unsigned int i;
     for(i = 0; i < bucket->count; i++) {
         if (memcmp(&bucket->fingerprints[i], &fingerprint, sizeof(FINGERPRINT)) == 0)
@@ -67,7 +67,7 @@ void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
     unsigned int target_bucket = 0;
     unsigned int lowest_count = 0;
 
-    table *tables = (table*)dlcbf->tables;
+    dlcbf_table *tables = (dlcbf_table*)dlcbf->tables;
 
     unsigned int i;
     for (i = 0; i < dlcbf->d; i++) {
@@ -81,7 +81,7 @@ void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
         }
     }
 
-    bucket *bucket = &tables[target_table].buckets[target_bucket];
+    dlcbf_bucket *bucket = &tables[target_table].buckets[target_bucket];
     memcpy(&bucket->fingerprints[lowest_count], hash, sizeof(FINGERPRINT));
     bucket->count++;
     dlcbf->count++;
@@ -99,9 +99,9 @@ dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcb
     dlcbf_loc loc = {NULL};
     for(i = 0; i < dlcbf->d; i++) {
         const unsigned int bucket_i = target_buckets[i];
-        const bucket bucket = dlcbf->tables[i].buckets[bucket_i];
+        const dlcbf_bucket bucket = dlcbf->tables[i].buckets[bucket_i];
 
-        const unsigned int *b_loc = item_location(fingerprint, &bucket);
+        const FINGERPRINT *b_loc = item_location(fingerprint, (dlcbf_bucket*)&bucket);
         if (b_loc != NULL) {
             loc.fingerprint = b_loc;
             break;
