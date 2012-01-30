@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -13,34 +14,24 @@
 #endif
 
 dlcbf *init(unsigned int d, unsigned int b) {
-    table *tables = (table*)malloc(d * sizeof(*tables));
+    dlcbf *dlcbf = malloc(sizeof(*dlcbf));
+    dlcbf->d = d;
+    dlcbf->b = b;
+    dlcbf->count = 0;
+
     unsigned int i;
+    dlcbf->tables = (table*)malloc(d*sizeof(table));
     for(i = 0; i < d; i++) {
-        bucket *buckets = (bucket*)malloc(b * sizeof(*buckets));
-        int j;
-        for (j = 0; j < b; j++) {
-            unsigned int *fingerprints = (unsigned int*)malloc(8 * sizeof(int));
-            bucket bucket;
-            bucket.count = 0;
-            bucket.fingerprints = fingerprints;
-            buckets[j] = bucket;
-        }
-        table table;
-        table.buckets = buckets;
-        tables[i] = table;
+        dlcbf->tables[i].buckets = malloc(sizeof(bucket)*b);
     }
-    dlcbf *t = malloc(sizeof(dlcbf));
-    t->d = d;
-    t->b = b;
-    t->count = 0;
-    t->tables = tables;
-    return t;
+
+    return dlcbf;
 }
 
 unsigned int get_bits(const unsigned char* input, const unsigned int bits, const unsigned int n) {
     const unsigned int bitpos = n*bits;
-    return ((input[bitpos/8] >> bitpos%8)
-        + (input[bitpos/8+1] << (8-bitpos%8)))
+    return (input[bitpos/8] >> bitpos%8)
+        + (input[bitpos/8+1] << 8-bitpos%8)
         & (int)(pow(2,bits) - 1);
 }
 
@@ -57,10 +48,11 @@ unsigned int* get_target_buckets(const unsigned int d, const unsigned int b, con
     return target_buckets;
 }
 
-unsigned int *item_location(const unsigned int *fingerprint, bucket bucket) {
+FINGERPRINT *item_location(FINGERPRINT *fingerprint, bucket* bucket) {
     unsigned int i;
-    for(i = 0; i < bucket.count; i++) {
-        if (bucket.fingerprints[i] == *fingerprint) return &bucket.fingerprints[i];
+    for(i = 0; i < bucket->count; i++) {
+        if (memcmp(&bucket->fingerprints[i], fingerprint, sizeof(FINGERPRINT)) == 0)
+            return &bucket->fingerprints[i];
     }
     return NULL;
 }
@@ -75,10 +67,12 @@ void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
     unsigned int target_bucket = 0;
     unsigned int lowest_count = 0;
 
+    table *tables = (table*)dlcbf->tables;
+
     unsigned int i;
     for (i = 0; i < dlcbf->d; i++) {
         unsigned int bucket_i = target_buckets[i];
-        unsigned int count = dlcbf->tables[i].buckets[bucket_i].count;
+        unsigned int count = tables[i].buckets[bucket_i].count;
 
         if (i == 0 || count < lowest_count) {
             lowest_count = count;
@@ -87,8 +81,8 @@ void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
         }
     }
 
-    bucket *bucket = &dlcbf->tables[target_table].buckets[target_bucket];
-    memcpy(&bucket->fingerprints[bucket->count], hash, sizeof(unsigned int));
+    bucket *bucket = &tables[target_table].buckets[target_bucket];
+    memcpy(&bucket->fingerprints[lowest_count], hash, sizeof(FINGERPRINT));
     bucket->count++;
     dlcbf->count++;
 }
@@ -98,7 +92,8 @@ dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcb
     SHA1(data, length, hash);
 
     unsigned int *target_buckets = get_target_buckets(dlcbf->d, dlcbf->b, hash);
-    unsigned int *fingerprint = (unsigned int*)hash;
+    FINGERPRINT fingerprint;
+    memcpy(&fingerprint, hash, sizeof(FINGERPRINT));
 
     int i;
     dlcbf_loc loc = {NULL};
@@ -106,7 +101,7 @@ dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcb
         const unsigned int bucket_i = target_buckets[i];
         const bucket bucket = dlcbf->tables[i].buckets[bucket_i];
 
-        const unsigned int *b_loc = item_location(fingerprint, bucket);
+        const unsigned int *b_loc = item_location(&fingerprint, &bucket);
         if (b_loc != NULL) {
             loc.fingerprint = b_loc;
             break;

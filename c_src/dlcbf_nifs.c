@@ -27,6 +27,7 @@ ERL_NIF_TERM dlcbf_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 
 ERL_NIF_TERM dlcbf_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     ErlNifBinary data;
+
     dlcbf_handle* handle;
     if (!enif_get_resource(env, argv[1], dlcbf_RESOURCE, (void**)&handle) ||
         !enif_inspect_binary(env, argv[0], &data))
