@@ -48,10 +48,10 @@ unsigned int* get_target_buckets(const unsigned int d, const unsigned int b, con
     return target_buckets;
 }
 
-FINGERPRINT *item_location(FINGERPRINT *fingerprint, bucket* bucket) {
+FINGERPRINT *item_location(FINGERPRINT fingerprint, bucket* bucket) {
     unsigned int i;
     for(i = 0; i < bucket->count; i++) {
-        if (memcmp(&bucket->fingerprints[i], fingerprint, sizeof(FINGERPRINT)) == 0)
+        if (memcmp(&bucket->fingerprints[i], &fingerprint, sizeof(FINGERPRINT)) == 0)
             return &bucket->fingerprints[i];
     }
     return NULL;
@@ -101,7 +101,7 @@ dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcb
         const unsigned int bucket_i = target_buckets[i];
         const bucket bucket = dlcbf->tables[i].buckets[bucket_i];
 
-        const unsigned int *b_loc = item_location(&fingerprint, &bucket);
+        const unsigned int *b_loc = item_location(fingerprint, &bucket);
         if (b_loc != NULL) {
             loc.fingerprint = b_loc;
             break;
