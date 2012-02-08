@@ -16,7 +16,7 @@ ERL_NIF_TERM dlcbf_new(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 
     dlcbf_handle* handle = (dlcbf_handle*)enif_alloc_resource(dlcbf_RESOURCE,
                                                             sizeof(dlcbf_handle));
-    dlcbf* dlcbf = init((unsigned int)d, (unsigned int)b);
+    dlcbf* dlcbf = init((unsigned int)4, (unsigned int)2048);
     handle->dlcbf = dlcbf;
 
     ERL_NIF_TERM result = enif_make_resource(env, handle);
