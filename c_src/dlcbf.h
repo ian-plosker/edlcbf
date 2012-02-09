@@ -1,10 +1,20 @@
 #define BUCKET_SIZE 8
-#define FINGERPRINT unsigned long int
+#define FINGERPRINT unsigned char 
 #define DLCBF_SIZE(d, b) (sizeof(bucket)*b*d)
 
 typedef struct {
+    unsigned char count;
+    FINGERPRINT fingerprint;
+} dlcbf_field;
+
+typedef struct {
+    unsigned int bucket_i;
+    FINGERPRINT fingerprint;
+} dlcbf_bucket_fingerprint;
+
+typedef struct {
     unsigned int count;
-    FINGERPRINT fingerprints[BUCKET_SIZE];
+    dlcbf_field fields[BUCKET_SIZE];
 } dlcbf_bucket;
 
 typedef struct {
@@ -19,7 +29,7 @@ typedef struct {
 } dlcbf;
 
 typedef struct {
-    const FINGERPRINT *fingerprint;
+    const dlcbf_field *field;
 } dlcbf_loc;
 
 dlcbf *init(unsigned int d, unsigned int b);
