@@ -34,19 +34,20 @@ dlcbf *init(unsigned int d, unsigned int b) {
 
 unsigned int get_bits(const unsigned char *input, unsigned int bits, const unsigned int n) {
     unsigned int value = 0;
+    unsigned int bitsleft = bits;
 
-    if (bits > 8) {
-        for (; bits > 8; bits-=8) {
+    if (bitsleft > 8) {
+        for (; bitsleft > 8; bitsleft-=8) {
             value <<= 8;
-            value += get_bits(input, 8, n);
+            value += get_bits(input, 8, n + (bits - bitsleft));
         }
-        value <<= bits;
+        value <<= bitsleft;
     }
 
-    const unsigned int bitpos = n*bits;
+    const unsigned int bitpos = n*bitsleft;
     value += (input[bitpos/8] >> bitpos%8)
         + (input[bitpos/8+1] << 8-bitpos%8)
-        & (unsigned int)(pow(2,bits) - 1);
+        & (unsigned int)(pow(2,bitsleft) - 1);
 
     return value;
 }
