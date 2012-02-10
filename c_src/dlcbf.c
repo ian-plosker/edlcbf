@@ -65,7 +65,7 @@ dlcbf_bucket_fingerprint *get_targets(const unsigned int d, const unsigned int b
     int i;
     for(i = 0; i < d; i++) {
         targets[i].bucket_i = get_bits(hash, bits, i*bits);
-        targets[i].fingerprint = get_bits(hash, sizeof(FINGERPRINT)*8, (i+1)*bits);
+        targets[i].fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, (i+1)*bits);
     }
 
     return targets;
@@ -73,7 +73,7 @@ dlcbf_bucket_fingerprint *get_targets(const unsigned int d, const unsigned int b
 
 dlcbf_field *item_location(const FINGERPRINT fingerprint, dlcbf_bucket* bucket) {
     unsigned int i;
-    unsigned int mask = pow(2, sizeof(FINGERPRINT)*8)-1;
+    unsigned int mask = pow(2, FINGERPRINT_BITSIZE)-1;
 
     for(i = 0; i < bucket->count; i++) {
         FINGERPRINT fingerprint_i = bucket->fields[i].fingerprint;
