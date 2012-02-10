@@ -5,14 +5,16 @@ for Erlang. Currently, it's a WORK IN PROGRESS.
 
 Done:
 
+- basic dlcbf
 - NIFs
-- `init`, `add`, `in`
-- *extremely* basic dlht
-- EQC tests that pass
+- `init`, `add`, `in`, `dstry`
+- EQC tests that pass (mostly)
 - space efficent implementation
+- counters
 
 Needs:
 
-- `remove`, `resize`, `dstry`
-- dynamic bit reassignment
-- counters
+- automatic sizing based on max elements and false positive probablity
+- `remove`, `resize`
+- semi-sorted buckets
+- dynamic bit reassignment (?)
