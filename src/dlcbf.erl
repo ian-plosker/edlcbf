@@ -62,7 +62,7 @@ in(_Bin, _Dlht) ->
         ?assertNot(in(<<"f">>, D)).
 
     basic_quickcheck_test() ->
-        Prop = eqc:numtests(500, dlcbf:prop_add_are_members()),
+        Prop = eqc:numtests(1000, dlcbf:prop_add_are_members()),
         ?assert(eqc:quickcheck(Prop)).
 
     pos_int() ->
@@ -75,7 +75,8 @@ in(_Bin, _Dlht) ->
         ?FORALL(M, non_empty(list(binary())),
             ?FORALL(N, non_empty(list(binary())),
                 ?LET({D, B}, {4, 2048},
-                    ?IMPLIES(M -- N == M,
+                    ?IMPLIES(M -- N == M andalso
+                        M -- lists:usort(M) == [],
                         check_membership(M, N, D, B))))).
 
     check_membership(M, N, D, B) ->
