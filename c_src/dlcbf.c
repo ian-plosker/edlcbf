@@ -32,22 +32,19 @@ dlcbf *init(unsigned int d, unsigned int b) {
     return dlcbf;
 }
 
-unsigned int get_bits(const unsigned char *input, unsigned int bits, const unsigned int n) {
+unsigned int get_bits(const unsigned char *input, const unsigned int numbits, const unsigned int pos) {
     unsigned int value = 0;
-    unsigned int bitsleft = bits;
 
-    if (bitsleft > 8) {
-        for (; bitsleft > 8; bitsleft-=8) {
-            value <<= 8;
-            value += get_bits(input, 8, n + (bits - bitsleft));
-        }
-        value <<= bitsleft;
+    int bitsleft;
+    for (bitsleft = numbits; bitsleft > 0; bitsleft = bitsleft - 8) {
+        const unsigned int getbits = bitsleft >= 8 ? 8 : bitsleft;
+        value <<= getbits;
+        const unsigned int curpos = (pos + (numbits - bitsleft));
+        value += (((input[curpos/8] >> curpos%8)
+            + (input[curpos/8+1] << 8-curpos%8))
+            >> (8 - getbits))
+            & (unsigned int)(pow(2,getbits) - 1);
     }
-
-    const unsigned int bitpos = n*bitsleft;
-    value += (input[bitpos/8] >> bitpos%8)
-        + (input[bitpos/8+1] << 8-bitpos%8)
-        & (unsigned int)(pow(2,bitsleft) - 1);
 
     return value;
 }
@@ -57,8 +54,8 @@ dlcbf_bucket_fingerprint *get_targets(const unsigned int d, const unsigned int b
 
     int i;
     for(i = 0; i < d; i++) {
-        targets[i].bucket_i = get_bits(hash, bits, i * bits);
-        targets[i].fingerprint = get_bits(hash, 32, (i+1) * bits);
+        targets[i].bucket_i = get_bits(hash, bits, i*bits);
+        targets[i].fingerprint = get_bits(hash, sizeof(FINGERPRINT)*8, (i+1)*bits);
     }
 
     return targets;
