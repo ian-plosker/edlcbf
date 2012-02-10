@@ -32,6 +32,16 @@ dlcbf *init(unsigned int d, unsigned int b) {
     return dlcbf;
 }
 
+void dstry(dlcbf *dlcbf) {
+    unsigned int i;
+    for(i = 0; i < dlcbf->d; i++) {
+        free(dlcbf->tables[i].buckets);
+    }
+
+    free(dlcbf->tables);
+    free(dlcbf);
+}
+
 unsigned int get_bits(const unsigned char *input, const unsigned int numbits, const unsigned int pos) {
     unsigned int value = 0;
 

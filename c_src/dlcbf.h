@@ -35,3 +35,4 @@ typedef struct {
 dlcbf *init(unsigned int d, unsigned int b);
 void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf);
 int member(const unsigned char *data, const unsigned int length, dlcbf *dlcbf);
+void dstry(dlcbf *dlcbf);

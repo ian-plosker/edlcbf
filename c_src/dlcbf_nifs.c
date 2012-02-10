@@ -56,6 +56,8 @@ ERL_NIF_TERM in(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
 }
 
 static void dlcbf_resource_cleanup(ErlNifEnv* env, void* arg) {
+    dlcbf_handle* handle = (dlcbf_handle*)arg;
+    dstry(handle->dlcbf);
 }
 
 static int on_load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
