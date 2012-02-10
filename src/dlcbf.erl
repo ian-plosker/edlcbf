@@ -62,7 +62,7 @@ in(_Bin, _Dlht) ->
         ?assertNot(in(<<"f">>, D)).
 
     basic_quickcheck_test() ->
-        Prop = eqc:numtests(100, dlcbf:prop_add_are_members()),
+        Prop = eqc:numtests(500, dlcbf:prop_add_are_members()),
         ?assert(eqc:quickcheck(Prop)).
 
     pos_int() ->
@@ -72,15 +72,11 @@ in(_Bin, _Dlht) ->
         ?LET(N, pos_int(), begin trunc(math:pow(2, N)) end).
 
     prop_add_are_members() ->
-        ?FORALL(L, non_empty(list(binary())),
+        ?FORALL(M, non_empty(list(binary())),
             ?FORALL(N, non_empty(list(binary())),
-                ?FORALL({D, B}, {pos_int(), power_of_two()},
-                    ?IMPLIES(D * B >= 256 andalso D * B =< 5192,
-                        ?IMPLIES(sets:size(sets:intersection(
-                                sets:from_list(L),
-                                sets:from_list(N)
-                            )) == 0,
-                            check_membership(L, N, D, B)))))).
+                ?LET({D, B}, {4, 2048},
+                    ?IMPLIES(M -- N == M,
+                        check_membership(M, N, D, B))))).
 
     check_membership(M, N, D, B) ->
         {ok, Dlht} = new(D, B),
