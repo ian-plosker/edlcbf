@@ -1,13 +1,15 @@
 #include <stdint.h>
 
 #define BUCKET_SIZE 8
+#define COUNTER uint16_t
 #define FINGERPRINT uint16_t
 #define FINGERPRINT_BITSIZE 10
+#define COUNTER_BITSIZE (sizeof(uint16_t) * 8 - FINGERPRINT_BITSIZE)
 #define DLCBF_SIZE(d, b) (sizeof(bucket)*b*d)
 
 typedef struct {
-    uint16_t count:6;
-    FINGERPRINT fingerprint:10;
+    COUNTER count:COUNTER_BITSIZE;
+    FINGERPRINT fingerprint:FINGERPRINT_BITSIZE;
 } dlcbf_field;
 
 typedef struct {

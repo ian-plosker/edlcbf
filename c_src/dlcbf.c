@@ -50,10 +50,10 @@ unsigned int get_bits(const unsigned char *input, const unsigned int numbits, co
         const unsigned int getbits = bitsleft >= 8 ? 8 : bitsleft;
         value <<= getbits;
         const unsigned int curpos = (pos + (numbits - bitsleft));
-        value += (((input[curpos/8] >> curpos%8)
-            + (input[curpos/8+1] << 8-curpos%8))
+        value += (((input[curpos / 8] >> curpos % 8)
+            + (input[curpos / 8 + 1] << (8 - curpos % 8)))
             >> (8 - getbits))
-            & (unsigned int)(pow(2,getbits) - 1);
+            & (unsigned int)(pow(2, getbits) - 1);
     }
 
     return value;
