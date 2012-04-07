@@ -46,7 +46,7 @@ dlcbf_destroy(Dlcbf* dlcbf)
 }
 
 static unsigned int
-get_bits(const unsigned char* input, const unsigned int numbits, const unsigned int pos)
+get_bits(const unsigned char* input, unsigned int numbits, unsigned int pos)
 {
     unsigned int value = 0;
 
@@ -65,7 +65,7 @@ get_bits(const unsigned char* input, const unsigned int numbits, const unsigned 
 }
 
 static DlcbfBucketFingerprint*
-get_targets(const unsigned int d, const unsigned int b, const unsigned char* hash, DlcbfBucketFingerprint* targets)
+get_targets(unsigned int d, unsigned int b, const unsigned char* hash, DlcbfBucketFingerprint* targets)
 {
     const int bits = rint(log(b)/log(2));
     unsigned int i;
@@ -95,7 +95,7 @@ item_location(const Fingerprint fingerprint, DlcbfBucket* bucket)
 }
 
 void
-dlcbf_add(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
+dlcbf_add(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
 {
     unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
@@ -127,7 +127,7 @@ dlcbf_add(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
 }
 
 static DlcbfLoc
-location_of(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf, DlcbfBucket** bucket)
+location_of(const unsigned char* data, unsigned int length, Dlcbf* dlcbf, DlcbfBucket** bucket)
 {
     unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
@@ -154,7 +154,7 @@ location_of(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf, 
 }
 
 int
-dlcbf_member(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
+dlcbf_member(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
 {
     DlcbfBucket* bucket;
     const DlcbfLoc loc = location_of(data, length, dlcbf, &bucket);
@@ -165,7 +165,7 @@ dlcbf_member(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
 ** TODO: this delete doesn't work properly since deleting a false positive results in a false negative
 */
 void
-dlcbf_delete(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
+dlcbf_delete(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
 {
     unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
