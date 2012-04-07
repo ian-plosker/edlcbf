@@ -82,8 +82,8 @@ qc(P) ->
     ?assert(eqc:quickcheck(?QC_OUT(P))).
 
 basic_quickcheck_test_() ->
-    Prop = eqc:numtests(1000, dlcbf:prop_add_are_members()),
-    {timeout, 60, fun() -> qc(Prop) end}.
+    Prop = eqc:numtests(5000, dlcbf:prop_add_are_members()),
+    {timeout, 2*60, fun() -> qc(Prop) end}.
 
 pos_int() ->
     ?LET(N, int(), abs(N) + 1).

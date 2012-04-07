@@ -28,12 +28,12 @@
 #include <stdint.h>
 
 #define BUCKET_SIZE 8
-#define FINGERPRINT_BITSIZE 10
+#define FINGERPRINT_BITSIZE 13
 
-typedef uint16_t Counter;
+typedef unsigned char Counter;
 typedef uint16_t Fingerprint;
 
-#define COUNTER_BITSIZE (sizeof(Counter)*8 - FINGERPRINT_BITSIZE)
+#define COUNTER_BITSIZE (sizeof(uint16_t)*8 - FINGERPRINT_BITSIZE)
 
 typedef union {
     uint16_t all;
@@ -44,7 +44,7 @@ typedef union {
 } DlcbfField;
 
 typedef struct {
-    unsigned bucket_i;
+    uint16_t bucket_i;
     Fingerprint fingerprint;
 } DlcbfBucketFingerprint;
 

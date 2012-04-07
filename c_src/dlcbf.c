@@ -97,28 +97,26 @@ get_bits(const unsigned char* input, unsigned numbits, unsigned pos)
 static DlcbfBucketFingerprint*
 get_targets(unsigned d, unsigned bits, const unsigned char* hash, DlcbfBucketFingerprint* targets)
 {
-    unsigned i, pos = 0;
+    unsigned pos;
     DlcbfBucketFingerprint* targets_end = targets + d;
-    for (i = 0; targets != targets_end; ++targets, ++i, pos += FINGERPRINT_BITSIZE) {
+    for (pos = 0; targets != targets_end; ++targets, pos += FINGERPRINT_BITSIZE) {
         targets->bucket_i = get_bits(hash, bits, pos);
         targets->fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, pos += bits);
     }
     return targets;
 }
 
-#define MASK ((1<<FINGERPRINT_BITSIZE)-1)
-
 static DlcbfField*
 item_location(const Fingerprint fingerprint, DlcbfBucket* bucket)
 {
+    DlcbfField f;
     DlcbfField* field = bucket->fields;
     DlcbfField* fields_end = field + bucket->count;
-    while (field != fields_end) {
+    for (f.f.fingerprint = fingerprint; field != fields_end; ++field) {
         Fingerprint fingerprint_i = field->f.fingerprint;
-        if ((fingerprint & MASK) == (fingerprint_i & MASK)) {
+        if (f.f.fingerprint == fingerprint_i) {
             return field;
         }
-        ++field;
     }
     return NULL;
 }
