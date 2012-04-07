@@ -3,6 +3,7 @@
 
 -export([new/2,
          add/2,
+         delete/2,
          in/2]).
 
 -ifdef(TEST).
@@ -43,6 +44,10 @@ new(_D, _B) ->
 add(_Bin, _Dlht) ->
     ?nif_stub.
 
+-spec delete(binary(), reference()) -> ok.
+delete(_Bin, _Dlht) ->
+    ?nif_stub.
+
 -spec in(binary(), reference()) -> boolean().
 in(_Bin, _Dlht) ->
     ?nif_stub.
@@ -60,10 +65,25 @@ basic_test() ->
     ?assert(in(<<"c">>, D)),
     ?assertNot(in(<<"d">>, D)),
     ?assertNot(in(<<"e">>, D)),
-    ?assertNot(in(<<"f">>, D)).
+    ?assertNot(in(<<"f">>, D)),
+    ok = delete(<<"c">>, D),
+    ?assertNot(in(<<"c">>, D)),
+    ?assert(in(<<"a">>, D)),
+    ?assert(in(<<"b">>, D)),
+    ok = delete(<<"a">>, D),
+    ?assertNot(in(<<"a">>, D)),
+    ?assertNot(in(<<"c">>, D)),
+    ?assert(in(<<"b">>, D)).
 
-basic_quickcheck_test() ->
-    ?assert(eqc:quickcheck(dlcbf:prop_add_are_members())).
+-define(QC_OUT(P),
+        eqc:on_output(fun(Str, Args) -> io:format(user, Str, Args) end, P)).
+
+qc(P) ->
+    ?assert(eqc:quickcheck(?QC_OUT(P))).
+
+basic_quickcheck_test_() ->
+    Prop = eqc:numtests(1000, dlcbf:prop_add_are_members()),
+    {timeout, 60, fun() -> qc(Prop) end}.
 
 pos_int() ->
     ?LET(N, int(), abs(N) + 1).

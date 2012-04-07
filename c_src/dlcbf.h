@@ -43,5 +43,6 @@ typedef struct {
 
 extern Dlcbf* dlcbf_init(unsigned int d, unsigned int b);
 extern void dlcbf_add(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf);
+extern void dlcbf_delete(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf);
 extern int dlcbf_member(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf);
 extern void dlcbf_destroy(Dlcbf* dlcbf);

@@ -49,6 +49,22 @@ dlcbf_insert(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 }
 
 ERL_NIF_TERM
+dlcbf_remove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    ErlNifBinary data;
+
+    DlcbfHandle* handle;
+    if (!enif_get_resource(env, argv[1], dlcbf_RESOURCE, (void**)&handle) ||
+        !enif_inspect_binary(env, argv[0], &data)) {
+        return enif_make_badarg(env);
+    }
+
+    Dlcbf* dlcbf = handle->dlcbf;
+    dlcbf_delete(data.data, data.size, dlcbf);
+    return ATOM_OK;
+}
+
+ERL_NIF_TERM
 dlcbf_in(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary data;
@@ -89,6 +105,7 @@ static ErlNifFunc nif_funcs[] =
 {
     {"new", 2, dlcbf_new},
     {"add", 2, dlcbf_insert},
+    {"delete", 2, dlcbf_remove},
     {"in", 2, dlcbf_in},
 };
 
