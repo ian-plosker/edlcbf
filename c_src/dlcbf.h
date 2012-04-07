@@ -44,13 +44,13 @@ typedef union {
 } DlcbfField;
 
 typedef struct {
-    unsigned int bucket_i;
+    unsigned bucket_i;
     Fingerprint fingerprint;
 } DlcbfBucketFingerprint;
 
 typedef struct {
     DlcbfField fields[BUCKET_SIZE];
-    unsigned int count;
+    unsigned char count;
 } DlcbfBucket;
 
 typedef struct {
@@ -60,16 +60,19 @@ typedef struct {
 typedef struct {
     unsigned long long count;
     DlcbfTable* tables;
-    const unsigned int d;
-    const unsigned int b;
+    const unsigned d;
+    const unsigned b;
+    const unsigned bits;
 } Dlcbf;
 
 typedef struct {
     DlcbfField* field;
 } DlcbfLoc;
 
-extern Dlcbf* dlcbf_init(unsigned int d, unsigned int b);
-extern void dlcbf_add(const unsigned char* data, unsigned int length, Dlcbf* dlcbf);
-extern void dlcbf_delete(const unsigned char* data, unsigned int length, Dlcbf* dlcbf);
-extern int dlcbf_member(const unsigned char* data, unsigned int length, Dlcbf* dlcbf);
+extern Dlcbf* dlcbf_init(unsigned d, unsigned b);
+extern void dlcbf_add(const unsigned char* data, unsigned length, Dlcbf* dlcbf);
+extern void dlcbf_delete(const unsigned char* data, unsigned length, Dlcbf* dlcbf);
+extern int dlcbf_member(const unsigned char* data, unsigned length, Dlcbf* dlcbf);
 extern void dlcbf_destroy(Dlcbf* dlcbf);
+
+#endif

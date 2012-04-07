@@ -41,11 +41,12 @@
 
 
 Dlcbf*
-dlcbf_init(unsigned int d, unsigned int b)
+dlcbf_init(unsigned d, unsigned b)
 {
     Dlcbf* dlcbf = malloc(sizeof(Dlcbf));
-    *((unsigned int*)&dlcbf->d) = d;
-    *((unsigned int*)&dlcbf->b) = b;
+    *((unsigned*)&dlcbf->d) = d;
+    *((unsigned*)&dlcbf->b) = b;
+    *((unsigned*)&dlcbf->bits) = rint(log(b)/log(2));
     dlcbf->count = 0;
 
     DlcbfTable* table = dlcbf->tables = malloc(sizeof(DlcbfTable)*d);
@@ -62,41 +63,45 @@ dlcbf_destroy(Dlcbf* dlcbf)
 {
     DlcbfTable* table = dlcbf->tables;
     DlcbfTable* tables_end = table + dlcbf->d;
-    for (; table != tables_end; ++table) {
-        free(table->buckets);
+    while (table != tables_end) {
+        free(table++->buckets);
     }
     free(dlcbf->tables);
     free(dlcbf);
 }
 
-static unsigned int
-get_bits(const unsigned char* input, unsigned int numbits, unsigned int pos)
+static unsigned
+get_bits(const unsigned char* input, unsigned numbits, unsigned pos)
 {
-    unsigned int value = 0;
+    unsigned value = 0;
+    unsigned i = pos/8, start = pos % 8;
 
-    int bitsleft;
-    for (bitsleft = numbits; bitsleft > 0; bitsleft -= 8) {
-        const unsigned int getbits = bitsleft >= 8 ? 8 : bitsleft;
-        value <<= getbits;
-        const unsigned int curpos = (pos + (numbits - bitsleft));
-        value += (((input[curpos / 8] >> curpos % 8)
-            + (input[curpos / 8 + 1] << (8 - curpos % 8)))
-            >> (8 - getbits))
-            & ((1<<getbits)-1);
+    if (start != 0) {
+        if (start > numbits) {
+            start = numbits;
+        }
+        value = input[i++] & (0xFF >> (8 - start));
+        numbits -= start;
     }
-
+    while (numbits >= 8) {
+        value = (value << 8) | input[i++];
+        numbits -= 8;
+    }
+    if (numbits != 0) {
+        unsigned char last = (input[i] >> (8 - numbits));
+        value = (value << numbits) | last;
+    }
     return value;
 }
 
 static DlcbfBucketFingerprint*
-get_targets(unsigned int d, unsigned int b, const unsigned char* hash, DlcbfBucketFingerprint* targets)
+get_targets(unsigned d, unsigned bits, const unsigned char* hash, DlcbfBucketFingerprint* targets)
 {
-    const int bits = rint(log(b)/log(2));
-    unsigned int i;
+    unsigned i, pos = 0;
     DlcbfBucketFingerprint* targets_end = targets + d;
-    for (i = 0; targets != targets_end; ++targets, ++i) {
-        targets->bucket_i = get_bits(hash, bits, i*bits);
-        targets->fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, (i+1)*bits);
+    for (i = 0; targets != targets_end; ++targets, ++i, pos += FINGERPRINT_BITSIZE) {
+        targets->bucket_i = get_bits(hash, bits, pos);
+        targets->fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, pos += bits);
     }
     return targets;
 }
@@ -119,24 +124,24 @@ item_location(const Fingerprint fingerprint, DlcbfBucket* bucket)
 }
 
 void
-dlcbf_add(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
+dlcbf_add(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
 {
     unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
 
     DlcbfBucketFingerprint targets[dlcbf->d];
-    get_targets(dlcbf->d, dlcbf->b, hash, targets);
+    get_targets(dlcbf->d, dlcbf->bits, hash, targets);
 
     DlcbfTable* table = dlcbf->tables;
     DlcbfTable* tables_end = table + dlcbf->d;
 
     DlcbfBucketFingerprint* target = targets;
-    unsigned int lowest_count = table->buckets[target->bucket_i].count;
+    unsigned lowest_count = table->buckets[target->bucket_i].count;
     DlcbfBucket* bucket = &table->buckets[target->bucket_i];
     Fingerprint fingerprint = target->fingerprint;
 
     for (++target, ++table; table != tables_end; ++target, ++table) {
-        unsigned int count = table->buckets[target->bucket_i].count;
+        unsigned count = table->buckets[target->bucket_i].count;
         if (count < lowest_count) {
             lowest_count = count;
             bucket = &table->buckets[target->bucket_i];
@@ -151,13 +156,13 @@ dlcbf_add(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
 }
 
 static DlcbfLoc
-location_of(const unsigned char* data, unsigned int length, Dlcbf* dlcbf, DlcbfBucket** bucket)
+location_of(const unsigned char* data, unsigned length, Dlcbf* dlcbf, DlcbfBucket** bucket)
 {
     unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
 
     DlcbfBucketFingerprint targets[dlcbf->d];
-    get_targets(dlcbf->d, dlcbf->b, hash, targets);
+    get_targets(dlcbf->d, dlcbf->bits, hash, targets);
 
     DlcbfBucketFingerprint* target = targets;
     DlcbfBucketFingerprint* targets_end = target + dlcbf->d;
@@ -178,7 +183,7 @@ location_of(const unsigned char* data, unsigned int length, Dlcbf* dlcbf, DlcbfB
 }
 
 int
-dlcbf_member(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
+dlcbf_member(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
 {
     DlcbfBucket* bucket;
     const DlcbfLoc loc = location_of(data, length, dlcbf, &bucket);
@@ -189,7 +194,7 @@ dlcbf_member(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
 ** TODO: this delete doesn't work properly since deleting a false positive results in a false negative
 */
 void
-dlcbf_delete(const unsigned char* data, unsigned int length, Dlcbf* dlcbf)
+dlcbf_delete(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
 {
     unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
