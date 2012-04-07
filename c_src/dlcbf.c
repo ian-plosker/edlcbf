@@ -13,40 +13,45 @@
 #  include <openssl/sha.h>
 #endif
 
-dlcbf *init(unsigned int d, unsigned int b) {
-    dlcbf *dlcbf = malloc(sizeof(*dlcbf));
-    dlcbf->d = d;
-    dlcbf->b = b;
+#define HASH_BYTES 20
+
+
+Dlcbf*
+dlcbf_init(unsigned int d, unsigned int b)
+{
+    Dlcbf* dlcbf = malloc(sizeof(Dlcbf));
+    *((unsigned int*)&dlcbf->d) = d;
+    *((unsigned int*)&dlcbf->b) = b;
     dlcbf->count = 0;
 
-    unsigned int i;
-    dlcbf->tables = (dlcbf_table*)malloc(d*sizeof(dlcbf_table));
-    for(i = 0; i < d; i++) {
-        dlcbf->tables[i].buckets = malloc(sizeof(dlcbf_bucket)*b);
-        unsigned int j;
-        for (j = 0; j < b; j++) {
-            dlcbf->tables[i].buckets[j].count = 0;
-        }
+    DlcbfTable* table = dlcbf->tables = malloc(sizeof(DlcbfTable)*d);
+    DlcbfTable* tables_end;
+    for (tables_end = table + d; table != tables_end; ++ table) {
+        table->buckets = malloc(sizeof(DlcbfBucket)*b);
+        memset(table->buckets, 0, sizeof(DlcbfBucket)*b);
     }
-
     return dlcbf;
 }
 
-void dstry(dlcbf *dlcbf) {
-    unsigned int i;
-    for(i = 0; i < dlcbf->d; i++) {
-        free(dlcbf->tables[i].buckets);
+void
+dlcbf_destroy(Dlcbf* dlcbf)
+{
+    DlcbfTable* table = dlcbf->tables;
+    DlcbfTable* tables_end = table + dlcbf->d;
+    for (; table != tables_end; ++table) {
+        free(table->buckets);
     }
-
     free(dlcbf->tables);
     free(dlcbf);
 }
 
-unsigned int get_bits(const unsigned char *input, const unsigned int numbits, const unsigned int pos) {
+static unsigned int
+get_bits(const unsigned char* input, const unsigned int numbits, const unsigned int pos)
+{
     unsigned int value = 0;
 
     int bitsleft;
-    for (bitsleft = numbits; bitsleft > 0; bitsleft = bitsleft - 8) {
+    for (bitsleft = numbits; bitsleft > 0; bitsleft -= 8) {
         const unsigned int getbits = bitsleft >= 8 ? 8 : bitsleft;
         value <<= getbits;
         const unsigned int curpos = (pos + (numbits - bitsleft));
@@ -59,88 +64,95 @@ unsigned int get_bits(const unsigned char *input, const unsigned int numbits, co
     return value;
 }
 
-dlcbf_bucket_fingerprint *get_targets(const unsigned int d, const unsigned int b, const unsigned char *hash, dlcbf_bucket_fingerprint *targets) {
+static DlcbfBucketFingerprint*
+get_targets(const unsigned int d, const unsigned int b, const unsigned char* hash, DlcbfBucketFingerprint* targets)
+{
     const int bits = rint(log(b)/log(2));
-
-    int i;
-    for(i = 0; i < d; i++) {
-        targets[i].bucket_i = get_bits(hash, bits, i*bits);
-        targets[i].fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, (i+1)*bits);
+    unsigned int i;
+    DlcbfBucketFingerprint* targets_end = targets + d;
+    for (i = 0; targets < targets_end; ++targets) {
+        targets->bucket_i = get_bits(hash, bits, i*bits);
+        targets->fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, (i+1)*bits);
     }
-
     return targets;
 }
 
-dlcbf_field *item_location(const FINGERPRINT fingerprint, dlcbf_bucket* bucket) {
-    unsigned int i;
-    unsigned int mask = pow(2, FINGERPRINT_BITSIZE)-1;
+static const unsigned int mask = ~(1<<FINGERPRINT_BITSIZE);
 
-    for(i = 0; i < bucket->count; i++) {
-        FINGERPRINT fingerprint_i = bucket->fields[i].fingerprint;
-        if ((fingerprint & mask) == (fingerprint_i & mask))
-            return &bucket->fields[i];
+static DlcbfField*
+item_location(const Fingerprint fingerprint, DlcbfBucket* bucket)
+{
+    DlcbfField* field = bucket->fields;
+    DlcbfField* fields_end = field + bucket->count;
+    while (field != fields_end) {
+        Fingerprint fingerprint_i = field->f.fingerprint;
+        if ((fingerprint & mask) == (fingerprint_i & mask)) {
+            return field;
+        }
+        ++field;
     }
     return NULL;
 }
 
-void add(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
-    unsigned char hash[20];
+void
+dlcbf_add(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
+{
+    unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
 
-    dlcbf_bucket_fingerprint targets[dlcbf->d];
+    DlcbfBucketFingerprint targets[dlcbf->d];
     get_targets(dlcbf->d, dlcbf->b, hash, targets);
 
-    unsigned int target_table = 0;
-    unsigned int target_bucket = 0;
-    unsigned int lowest_count = 0;
+    DlcbfTable* table = dlcbf->tables;
+    DlcbfTable* tables_end = table + dlcbf->d;
 
-    dlcbf_table *tables = (dlcbf_table*)dlcbf->tables;
+    DlcbfBucketFingerprint* target = targets;
+    unsigned int lowest_count = table->buckets[target->bucket_i].count;
+    DlcbfBucket* bucket = &table->buckets[target->bucket_i];
+    Fingerprint fingerprint = target->fingerprint;
 
-    unsigned int i;
-    for (i = 0; i < dlcbf->d; i++) {
-        unsigned int bucket_i = targets[i].bucket_i;
-        unsigned int count = tables[i].buckets[bucket_i].count;
-
-        if (i == 0 || count < lowest_count) {
+    for (++target, ++table; table != tables_end; ++target, ++table) {
+        unsigned int count = table->buckets[target->bucket_i].count;
+        if (count < lowest_count) {
             lowest_count = count;
-            target_table = i;
-            target_bucket = bucket_i;
+            bucket = &table->buckets[target->bucket_i];
+            fingerprint = target->fingerprint;
         }
     }
 
-    dlcbf_bucket *bucket = &tables[target_table].buckets[target_bucket];
-    FINGERPRINT fingerprint = targets[target_table].fingerprint;
-    bucket->fields[lowest_count].fingerprint = fingerprint;
-    bucket->fields[lowest_count].count++;
-
-    bucket->count = lowest_count + 1;
-    dlcbf->count++;
+    bucket->fields[lowest_count].f.fingerprint = fingerprint;
+    ++bucket->fields[lowest_count].f.count;
+    ++bucket->count;
+    ++dlcbf->count;
 }
 
-dlcbf_loc location_of(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
-    unsigned char hash[20];
+static DlcbfLoc
+location_of(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
+{
+    unsigned char hash[HASH_BYTES];
     SHA1(data, length, hash);
 
-    dlcbf_bucket_fingerprint targets[dlcbf->d];
+    DlcbfBucketFingerprint targets[dlcbf->d];
     get_targets(dlcbf->d, dlcbf->b, hash, targets);
 
-    int i;
-    dlcbf_loc loc = {NULL};
-    for(i = 0; i < dlcbf->d; i++) {
-        const unsigned int bucket_i = targets[i].bucket_i;
-        const dlcbf_bucket bucket = dlcbf->tables[i].buckets[bucket_i];
-        FINGERPRINT fingerprint = targets[i].fingerprint;
-        const dlcbf_field *b_loc = item_location(fingerprint, (dlcbf_bucket*)&bucket);
+    DlcbfBucketFingerprint* target = targets;
+    DlcbfBucketFingerprint* targets_end = target + dlcbf->d;
+    DlcbfTable* table = dlcbf->tables;
+    DlcbfLoc loc = {NULL};
+    while (target != targets_end) {
+        DlcbfBucket* bucket = &table++->buckets[target->bucket_i];
+        DlcbfField* b_loc = item_location(target++->fingerprint, bucket);
         if (b_loc != NULL) {
             loc.field = b_loc;
             break;
         }
     }
-
     return loc;
 }
 
-int member(const unsigned char *data, const unsigned int length, dlcbf *dlcbf) {
-    const dlcbf_loc loc = location_of(data, length, dlcbf);
+int
+dlcbf_member(const unsigned char* data, const unsigned int length, Dlcbf* dlcbf)
+{
+    const DlcbfLoc loc = location_of(data, length, dlcbf);
     return loc.field != NULL;
 }
