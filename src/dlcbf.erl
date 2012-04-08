@@ -1,5 +1,27 @@
+%% -------------------------------------------------------------------
+%%
+%% dlcbf: Erlang NIF wrapper for d-left counting bloom filter
+%%
+%% Copyright (c) 2012 Basho Technologies, Inc. All Rights Reserved.
+%%
+%% This file is provided to you under the Apache License,
+%% Version 2.0 (the "License"); you may not use this file
+%% except in compliance with the License.  You may obtain
+%% a copy of the License at
+%%
+%%   http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing,
+%% software distributed under the License is distributed on an
+%% "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+%% KIND, either express or implied.  See the License for the
+%% specific language governing permissions and limitations
+%% under the License.
+%%
+%% -------------------------------------------------------------------
 -module(dlcbf).
 -author("Ian Plosker").
+-author("Steve Vinoski").
 
 -export([new/2,
          add/2,
@@ -12,7 +34,11 @@
 -export([pos_int/0,
          power_of_two/0,
          prop_add_are_members/0,
-         check_membership/4]).
+         check_membership/4,
+         keys/0,
+         ops/1,
+         apply_ops/3,
+         prop_add_delete/0]).
 -endif.
 
 -on_load(init/0).
@@ -100,16 +126,51 @@ prop_add_are_members() ->
                                   check_membership(M, N, D, B))))).
 
 check_membership(M, N, D, B) ->
-    {ok, Dlht} = new(D, B),
+    {ok, Dlcbf} = new(D, B),
     F = lists:foldl(fun(X, Acc) ->
                             add(X, Acc),
                             Acc
-                    end, Dlht, M),
+                    end, Dlcbf, M),
     lists:all(fun(X) ->
                       in(X, F)
               end, M) and
         lists:all(fun(X) ->
                           not in(X, F)
                   end, N).
+
+keys() ->
+    eqc_gen:non_empty(list(eqc_gen:non_empty(binary()))).
+
+ops(Keys) ->
+    {oneof([add, delete]), oneof(Keys)}.
+
+apply_ops([], _Dlcbf, Acc) ->
+    Acc;
+apply_ops([{add, Key}|T], Dlcbf, Acc) ->
+    ok = dlcbf:add(Key, Dlcbf),
+    apply_ops(T, Dlcbf, orddict:store(Key, ok, Acc));
+apply_ops([{delete, Key}|T], Dlcbf, Acc) ->
+    ok = dlcbf:delete(Key, Dlcbf),
+    apply_ops(T, Dlcbf, orddict:store(Key, deleted, Acc)).
+
+prop_add_delete() ->
+    ?LET(Keys, keys(),
+         ?FORALL(Ops0, eqc_gen:non_empty(list(ops(Keys))),
+                 begin
+                     {ok, Dlcbf} = new(4, 2048),
+                     Ops = lists:usort(Ops0),
+                     Model = apply_ops(Ops, Dlcbf, []),
+                     F = fun({Key, deleted}) ->
+                                 ?assertEqual(false, dlcbf:in(Key, Dlcbf));
+                            ({Key, ok}) ->
+                                 ?assertEqual(true, dlcbf:in(Key, Dlcbf))
+                         end,
+                     lists:map(F, Model),
+                     true
+                 end)).
+
+prop_add_delete_test_() ->
+    Prop = eqc:numtests(5000, dlcbf:prop_add_delete()),
+    {timeout, 2*60, fun() -> qc(Prop) end}.
 
 -endif.

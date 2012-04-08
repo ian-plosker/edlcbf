@@ -1,7 +1,7 @@
 /*
 ** -------------------------------------------------------------------
 **
-** dlcbf.c: d-left hashing counting bloom filter implementation
+** dlcbf.c: d-left counting bloom filter implementation
 **
 ** Copyright (c) 2012 Basho Technologies, Inc. All Rights Reserved.
 **
@@ -168,9 +168,7 @@ location_of(const unsigned char* data, unsigned length, Dlcbf* dlcbf, DlcbfBucke
     DlcbfLoc loc = {NULL};
     while (target != targets_end) {
         *bucket = &table++->buckets[target->bucket_i];
-        DlcbfField* b_loc = item_location(target++->fingerprint, *bucket);
-        if (b_loc != NULL) {
-            loc.field = b_loc;
+        if ((loc.field = item_location(target++->fingerprint, *bucket)) != NULL) {
             break;
         }
     }
@@ -188,9 +186,6 @@ dlcbf_member(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
     return loc.field != NULL;
 }
 
-/*
-** TODO: this delete doesn't work properly since deleting a false positive results in a false negative
-*/
 void
 dlcbf_delete(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
 {

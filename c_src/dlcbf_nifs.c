@@ -1,7 +1,7 @@
 /*
 ** -------------------------------------------------------------------
 **
-** dlcbf_nifs.c: Erlang NIFs for d-left hashing counting bloom filter
+** dlcbf_nifs.c: Erlang NIFs for d-left counting bloom filter
 **
 ** Copyright (c) 2012 Basho Technologies, Inc. All Rights Reserved.
 **

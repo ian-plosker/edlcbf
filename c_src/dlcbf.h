@@ -4,7 +4,7 @@
 /*
 ** -------------------------------------------------------------------
 **
-** dlcbf.h: d-left hashing counting bloom filter interface
+** dlcbf.h: d-left counting bloom filter interface
 **
 ** Copyright (c) 2012 Basho Technologies, Inc. All Rights Reserved.
 **
