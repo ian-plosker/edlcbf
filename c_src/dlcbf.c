@@ -74,12 +74,10 @@ static unsigned
 get_bits(const unsigned char* input, unsigned numbits, unsigned pos)
 {
     unsigned value = 0;
-    unsigned i = pos/8, start = pos % 8;
+    unsigned posbits = pos % 8;
+    unsigned i = pos/8, start = posbits > numbits ? numbits : posbits;
 
     if (start != 0) {
-        if (start > numbits) {
-            start = numbits;
-        }
         value = input[i++] & (0xFF >> (8 - start));
         numbits -= start;
     }
