@@ -47,7 +47,6 @@ dlcbf_init(unsigned d, unsigned b)
     *((unsigned*)&dlcbf->d) = d;
     *((unsigned*)&dlcbf->b) = b;
     *((unsigned*)&dlcbf->bits) = rint(log(b)/log(2));
-    dlcbf->count = 0;
 
     DlcbfTable* table = dlcbf->tables = malloc(sizeof(DlcbfTable)*d);
     DlcbfTable* tables_end;
@@ -148,7 +147,6 @@ dlcbf_add(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
     bucket->fields[lowest_count].f.fingerprint = fingerprint;
     ++bucket->fields[lowest_count].f.count;
     ++bucket->count;
-    ++dlcbf->count;
 }
 
 static DlcbfLoc
@@ -192,7 +190,6 @@ dlcbf_delete(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
     DlcbfBucket* bucket;
     DlcbfLoc loc = location_of(data, length, dlcbf, &bucket);
     if (loc.field != NULL) {
-        --dlcbf->count;
         --bucket->count;
         --(loc.field->f.count);
     }

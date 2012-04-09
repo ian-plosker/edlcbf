@@ -58,7 +58,6 @@ typedef struct {
 } DlcbfTable;
 
 typedef struct {
-    unsigned long long count;
     DlcbfTable* tables;
     const unsigned d;
     const unsigned b;
