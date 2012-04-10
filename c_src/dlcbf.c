@@ -49,10 +49,11 @@ dlcbf_init(unsigned d, unsigned b)
     *((unsigned*)&dlcbf->bits) = rint(log(b)/log(2));
 
     DlcbfTable* table = dlcbf->tables = malloc(sizeof(DlcbfTable)*d);
-    DlcbfTable* tables_end;
-    for (tables_end = table + d; table != tables_end; ++ table) {
-        table->buckets = malloc(sizeof(DlcbfBucket)*b);
-        memset(table->buckets, 0, sizeof(DlcbfBucket)*b);
+    DlcbfTable* tables_end = table + d;
+    const size_t numbuckets = sizeof(DlcbfBucket)*b;
+    while (table != tables_end) {
+        table->buckets = malloc(numbuckets);
+        memset(table++->buckets, 0, numbuckets);
     }
     return dlcbf;
 }
@@ -110,8 +111,7 @@ item_location(const Fingerprint fingerprint, DlcbfBucket* bucket)
     DlcbfField* field = bucket->fields;
     DlcbfField* fields_end = field + bucket->count;
     for (f.f.fingerprint = fingerprint; field != fields_end; ++field) {
-        Fingerprint fingerprint_i = field->f.fingerprint;
-        if (f.f.fingerprint == fingerprint_i) {
+        if (f.f.fingerprint == field->f.fingerprint) {
             return field;
         }
     }
