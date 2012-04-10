@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #include "dlcbf.h"
 
@@ -55,6 +56,7 @@ dlcbf_init(unsigned d, unsigned b)
         table->buckets = malloc(numbuckets);
         memset(table++->buckets, 0, numbuckets);
     }
+    assert(sizeof(DlcbfField) == sizeof dlcbf->tables->buckets->fields[0].all);
     return dlcbf;
 }
 
@@ -97,9 +99,9 @@ get_targets(unsigned d, unsigned bits, const unsigned char* hash, DlcbfBucketFin
 {
     unsigned pos;
     DlcbfBucketFingerprint* targets_end = targets + d;
-    for (pos = 0; targets != targets_end; ++targets, pos += FINGERPRINT_BITSIZE) {
+    for (pos = 0; targets != targets_end; ++targets, pos += FINGERPRINT_BITS) {
         targets->bucket_i = get_bits(hash, bits, pos);
-        targets->fingerprint = get_bits(hash, FINGERPRINT_BITSIZE, pos += bits);
+        targets->fingerprint = get_bits(hash, FINGERPRINT_BITS, pos += bits);
     }
     return targets;
 }
@@ -131,21 +133,25 @@ dlcbf_add(const unsigned char* data, unsigned length, Dlcbf* dlcbf)
     DlcbfTable* tables_end = table + dlcbf->d;
 
     DlcbfBucketFingerprint* target = targets;
-    unsigned lowest_count = table->buckets[target->bucket_i].count;
-    DlcbfBucket* bucket = &table->buckets[target->bucket_i];
     Fingerprint fingerprint = target->fingerprint;
+    DlcbfBucket* bucket = table->buckets + target->bucket_i;
+    unsigned lowest_count = bucket->count;
+    DlcbfField* field = bucket->fields + lowest_count;
 
     for (++target, ++table; table != tables_end; ++target, ++table) {
-        unsigned count = table->buckets[target->bucket_i].count;
+        DlcbfBucket* tmpbucket = table->buckets + target->bucket_i;
+        unsigned count = tmpbucket->count;
         if (count < lowest_count) {
             lowest_count = count;
-            bucket = &table->buckets[target->bucket_i];
+            bucket = tmpbucket;
+            field = bucket->fields + lowest_count;
             fingerprint = target->fingerprint;
         }
     }
 
-    bucket->fields[lowest_count].f.fingerprint = fingerprint;
-    ++bucket->fields[lowest_count].f.count;
+    field->f.fingerprint = fingerprint;
+    assert(field->f.count < ((1 << COUNTER_BITS) - 1));
+    ++field->f.count;
     ++bucket->count;
 }
 
@@ -163,7 +169,7 @@ location_of(const unsigned char* data, unsigned length, Dlcbf* dlcbf, DlcbfBucke
     DlcbfTable* table = dlcbf->tables;
     DlcbfLoc loc = {NULL};
     while (target != targets_end) {
-        *bucket = &table++->buckets[target->bucket_i];
+        *bucket = table++->buckets + target->bucket_i;
         if ((loc.field = item_location(target++->fingerprint, *bucket)) != NULL) {
             break;
         }

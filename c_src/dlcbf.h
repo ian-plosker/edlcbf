@@ -27,19 +27,19 @@
 
 #include <stdint.h>
 
-#define BUCKET_SIZE 8
-#define FINGERPRINT_BITSIZE 13
+#define BUCKET_HEIGHT 8
+#define FINGERPRINT_BITS 13
 
 typedef unsigned char Counter;
 typedef uint16_t Fingerprint;
 
-#define COUNTER_BITSIZE (sizeof(uint16_t)*8 - FINGERPRINT_BITSIZE)
+#define COUNTER_BITS (sizeof(uint16_t)*8 - FINGERPRINT_BITS)
 
 typedef union {
     uint16_t all;
     struct {
-        Counter     count:       COUNTER_BITSIZE;
-        Fingerprint fingerprint: FINGERPRINT_BITSIZE;
+        Counter     count:       COUNTER_BITS;
+        Fingerprint fingerprint: FINGERPRINT_BITS;
     } f;
 } DlcbfField;
 
@@ -49,7 +49,7 @@ typedef struct {
 } DlcbfBucketFingerprint;
 
 typedef struct {
-    DlcbfField fields[BUCKET_SIZE];
+    DlcbfField fields[BUCKET_HEIGHT];
     unsigned char count;
 } DlcbfBucket;
 
