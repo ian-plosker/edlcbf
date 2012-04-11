@@ -1,20 +1,18 @@
-# d-left hashing bloom filter for erlang
+# d-left counting bloom filter for erlang
 
-This will eventually be a fully functional d-left hashing bloom filter
-for Erlang. Currently, it's a WORK IN PROGRESS.
+This is a reasonably functional d-left counting bloom filter for Erlang.
 
 Done:
 
 - basic dlcbf
 - NIFs
-- `init`, `add`, `in`, `dstry`
-- EQC tests that pass (mostly)
+- `init`, `add`, `in`, `delete`, `destroy`
+- EQC tests that pass
 - space efficent implementation
 - counters
 
 Needs:
 
 - automatic sizing based on max elements and false positive probablity
-- `remove`, `resize`
 - semi-sorted buckets
 - dynamic bit reassignment (?)
