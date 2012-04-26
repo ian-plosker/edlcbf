@@ -29,8 +29,8 @@
          in/2]).
 
 -ifdef(TEST).
+-ifdef(EQC).
 -include_lib("eqc/include/eqc.hrl").
--include_lib("eunit/include/eunit.hrl").
 -export([pos_int/0,
          power_of_two/0,
          prop_add_are_members/0,
@@ -39,6 +39,8 @@
          ops/1,
          apply_ops/3,
          prop_add_delete/0]).
+-endif.
+-include_lib("eunit/include/eunit.hrl").
 -endif.
 
 -on_load(init/0).
@@ -100,6 +102,8 @@ basic_test() ->
     ?assertNot(in(<<"a">>, D)),
     ?assertNot(in(<<"c">>, D)),
     ?assert(in(<<"b">>, D)).
+
+-ifdef(EQC).
 
 -define(QC_OUT(P),
         eqc:on_output(fun(Str, Args) -> io:format(user, Str, Args) end, P)).
@@ -172,5 +176,7 @@ prop_add_delete() ->
 prop_add_delete_test_() ->
     Prop = eqc:numtests(5000, dlcbf:prop_add_delete()),
     {timeout, 2*60, fun() -> qc(Prop) end}.
+
+-endif. % EQC
 
 -endif.
